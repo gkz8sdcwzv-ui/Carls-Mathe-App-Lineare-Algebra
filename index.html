@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineare Algebra – Lernapp (Wirtschaftsmathematik Hohenheim)</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--fg:#1c2330;--mut:#667085;--pri:#1f5fbf;--prifg:#fff;--ok:#1a7f37;--bad:#c62828;--bd:#d6dbe3;--okbg:#e6f4ea;--badbg:#fdecea}
+@media(prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--fg:#e8ebf0;--mut:#9aa4b2;--pri:#6ea8ff;--prifg:#0b1220;--ok:#4cc26a;--bad:#ff7b7b;--bd:#343c4a;--okbg:#17321f;--badbg:#3a1c1c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+header .in{max-width:900px;margin:0 auto;padding:.6rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center}
+header h1{font-size:1.05rem;margin:0;flex:1 1 auto}
+nav{display:flex;flex-wrap:wrap;gap:.3rem}
+button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:.45rem .8rem;cursor:pointer}
+button:hover{border-color:var(--pri)}
+button.pri{background:var(--pri);color:var(--prifg);border-color:var(--pri);font-weight:600}
+nav button.on{background:var(--pri);color:var(--prifg);border-color:var(--pri)}
+main{max-width:900px;margin:0 auto;padding:1rem}
+.card,.task{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:1rem 1.2rem;margin:0 0 1rem}
+.card h2,.task h3{margin:.1rem 0 .6rem}
+.task h3{font-size:1rem;border-bottom:1px solid var(--bd);padding-bottom:.4rem}
+.mut{color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.7rem;margin-bottom:1rem}
+.tile{display:flex;flex-direction:column;gap:.2rem;text-align:left;padding:.8rem 1rem;border-radius:12px}
+.tile small{color:var(--pri);font-weight:600;text-transform:uppercase;font-size:.7rem;letter-spacing:.04em}
+.bar{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;margin-bottom:.8rem}
+select{font:inherit;padding:.35rem .5rem;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}
+.prompt{margin:.5rem 0 .8rem}
+.part{margin:.9rem 0;padding-top:.2rem}
+.plabel{margin-bottom:.35rem;font-weight:500}
+input.in{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:.35rem .5rem}
+input.num{width:11rem}
+.mgrid{border-collapse:collapse}
+.mgrid td{padding:2px}
+input.cell{width:5.2rem;text-align:center}
+input.okin{border-color:var(--ok);background:var(--okbg)}
+input.badin{border-color:var(--bad);background:var(--badbg)}
+.opt{display:flex;gap:.6rem;align-items:flex-start;padding:.4rem .6rem;border:1px solid var(--bd);border-radius:8px;margin:.3rem 0;cursor:pointer}
+.opt input{margin-top:.3rem}
+.opt.optok{border-color:var(--ok);background:var(--okbg)}
+.opt.optbad{border-color:var(--bad);background:var(--badbg)}
+.fb{margin-top:.3rem;font-size:.95rem}
+.fb.ok{color:var(--ok);font-weight:600}
+.fb.bad{color:var(--bad)}
+.sol{margin-top:.9rem;padding:.7rem .9rem;border-left:4px solid var(--pri);background:var(--bg);border-radius:6px;font-size:.95rem;overflow-x:auto}
+.btns{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1.2rem}
+.mx{display:inline-table;vertical-align:middle;margin:.15rem .3rem;border-left:2px solid var(--fg);border-right:2px solid var(--fg);border-radius:9px;border-collapse:separate;border-spacing:0;padding:0 .15rem}
+.mx td{padding:.05rem .45rem;text-align:center;white-space:nowrap}
+.timer{position:sticky;top:3.2rem;z-index:4;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;background:var(--card);border:1px solid var(--pri);border-radius:12px;padding:.6rem 1rem;margin-bottom:1rem}
+#clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.25rem;margin-left:auto}
+#clock.warn{color:var(--bad)}
+.big{font-size:2rem;font-weight:700}
+table.info{border-collapse:collapse}
+table.info td,table.info th{border:1px solid var(--bd);padding:.3rem .6rem;text-align:left}
+.eq{margin:.2rem 0 .2rem 1rem}
+ul{padding-left:1.2rem;margin:.4rem 0}
+.fs h3{margin:1rem 0 .3rem;color:var(--pri)}
+</style>
+</head>
+<body>
+<header><div class="in">
+<h1>Lineare Algebra · Lernapp</h1>
+<nav>
+<button data-v="home">Start</button>
+<button data-v="mc">Multiple Choice</button>
+<button data-v="calc">Rechenaufgaben</button>
+<button data-v="tests">Probetests</button>
+<button data-v="formeln">Formeln</button>
+</nav>
+</div></header>
+<main id="view"></main>
+<script>
+'use strict';
+/* ===== Bruchrechnung und Matrizen ===== */
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t}return a||1}
+function fr(n,d){d=d||1;if(d<0){n=-n;d=-d}const g=gcd(n,d);return{n:n/g,d:d/g}}
+function toF(x){if(typeof x==='object')return x;if(Number.isInteger(x))return fr(x,1);return fr(Math.round(x*1000),1000)}
+const fadd=(a,b)=>fr(a.n*b.d+b.n*a.d,a.d*b.d),fsub=(a,b)=>fr(a.n*b.d-b.n*a.d,a.d*b.d),fmul=(a,b)=>fr(a.n*b.n,a.d*b.d),fdiv=(a,b)=>fr(a.n*b.d,a.d*b.n);
+const fneg=a=>fr(-a.n,a.d),fz=a=>a.n===0,fval=a=>typeof a==='number'?a:a.n/a.d;
+function nstr(x){return(Number.isInteger(x)?String(x):String(Math.round(x*10000)/10000).replace('.',',')).replace('-','−')}
+function fstr(a){if(typeof a==='string')return a;if(typeof a==='number')return nstr(a);return(a.n<0?'−':'')+Math.abs(a.n)+(a.d!==1?'/'+a.d:'')}
+const Fm=A=>A.map(r=>r.map(toF));
+const mT=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+const mmul=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,a,k)=>fadd(s,fmul(a,B[k][j])),fr(0))));
+const madd=(A,B)=>A.map((r,i)=>r.map((a,j)=>fadd(a,B[i][j])));
+const msub=(A,B)=>A.map((r,i)=>r.map((a,j)=>fsub(a,B[i][j])));
+const mscal=(k,A)=>A.map(r=>r.map(a=>fmul(toF(k),a)));
+const meq=(A,B)=>A.every((r,i)=>r.every((a,j)=>a.n===B[i][j].n&&a.d===B[i][j].d));
+const minor=(A,i,j)=>A.filter((_,r)=>r!==i).map(r=>r.filter((_,c)=>c!==j));
+function mdet(A){const n=A.length;if(n===1)return A[0][0];if(n===2)return fsub(fmul(A[0][0],A[1][1]),fmul(A[0][1],A[1][0]));
+ let s=fr(0);for(let j=0;j<n;j++){if(fz(A[0][j]))continue;const c=fmul(A[0][j],mdet(minor(A,0,j)));s=j%2?fsub(s,c):fadd(s,c)}return s}
+function minv(A){const n=A.length,d=mdet(A);if(fz(d))throw new Error('Matrix singulär');
+ return A.map((_,i)=>A.map((_,j)=>{const c=mdet(minor(A,j,i));return fdiv((i+j)%2?fneg(c):c,d)}))}
+function gauss(A){const G=A.map(r=>r.slice()),m=G.length,n=G[0].length;let r=0;
+ for(let c=0;c<n&&r<m;c++){let p=-1;for(let i=r;i<m;i++)if(!fz(G[i][c])){p=i;break}if(p<0)continue;
+  const t=G[p];G[p]=G[r];G[r]=t;
+  for(let i=r+1;i<m;i++){if(fz(G[i][c]))continue;const f=fdiv(G[i][c],G[r][c]);G[i]=G[i].map((a,k)=>fsub(a,fmul(f,G[r][k])))}
+  r++}
+ return{E:G,rank:r}}
+/* ===== Darstellung ===== */
+function M(A){return'<table class="mx">'+A.map(r=>'<tr>'+r.map(a=>'<td>'+fstr(a)+'</td>').join('')+'</tr>').join('')+'</table>'}
+const col=v=>v.map(a=>[a]);
+const dim=A=>A.length+'×'+A[0].length;
+const par=s=>s[0]==='−'?'('+s+')':s;
+const pn=a=>par(fstr(toF(a)));
+function poly(ts){let s='';ts.forEach(([c,v])=>{c=toF(c);if(fz(c))return;const neg=c.n<0,a=fstr(fr(Math.abs(c.n),c.d));
+ const body=(a==='1'&&v?'':a+(v&&c.d!==1?'·':''))+v;s+=s?(neg?' − ':' + ')+body:(neg?'−':'')+body});return s||'0'}
+const VARS=['x₁','x₂','x₃','x₄'];
+/* ===== Aufgaben-Bausteine ===== */
+const TOP={vek:'Vektoren',mat:'Matrizenrechnung',bes:'Besondere Matrizen',det:'Determinante',inv:'Inverse',rang:'Rang',lgs:'LGS & Gauß',qf:'Quadratische Formen'};
+const T=(topic,title,prompt,parts,sol)=>({topic,title,prompt,parts,sol});
+const num=(label,ans,o)=>Object.assign({t:'num',label,ans},o||{});
+const mat=(label,ans)=>({t:'mat',label,ans});
+const sc=(label,opts,ans,fix)=>({t:'sc',label,opts,ans,fix:!!fix});
+const mc=(label,opts,ans)=>({t:'mc',label,opts,ans});
+const REG=['regulär (nicht singulär)','singulär'];
+const DEF=['positiv definit','positiv semidefinit','indefinit','negativ semidefinit','negativ definit'];
+const need=(c,m)=>{if(!c)throw new Error('Aufgabe fehlerhaft: '+m)};
+/* --- Vektoren --- */
+const dot=(v,w)=>v.reduce((s,a,i)=>s+a*w[i],0);
+function tLin(v,w,a,b){const r=v.map((x,i)=>[fr(a*x+b*w[i])]);
+ return T('vek','Linearkombination',`Gegeben sind v = ${M(col(v))} und w = ${M(col(w))}. Berechnen Sie ${a}v ${b<0?'−':'+'} ${Math.abs(b)}w.`,
+ [mat('Ergebnis =',r)],`Skalarmultiplikation und Addition erfolgen elementweise, z. B. 1. Element: ${a}·${pn(v[0])} ${b<0?'−':'+'} ${Math.abs(b)}·${pn(w[0])} = ${fstr(r[0][0])}.`)}
+function tVec(v,w){const d=dot(v,w),l=Math.sqrt(dot(v,v)),O=mmul(Fm(col(v)),Fm([w]));
+ return T('vek','Vektorprodukte und Länge',`Gegeben sind v = ${M(col(v))} und w = ${M(col(w))}.`,
+ [num('Inneres Produkt v′w =',fr(d)),num('Länge ‖v‖ = (auf 2 Dezimalstellen)',l),mat('Äußeres Produkt vw′ =',O)],
+ `v′w = ${v.map((a,i)=>pn(a)+'·'+pn(w[i])).join(' + ')} = ${nstr(d)} (ein Skalar). ‖v‖ = √(v′v) = √${dot(v,v)} ≈ ${nstr(Math.round(l*100)/100)}. Das äußere Produkt vw′ ist eine ${v.length}×${w.length}-Matrix mit den Elementen vᵢ·wⱼ.`)}
+function tAngle(v,w){const d=dot(v,w),lv=Math.sqrt(dot(v,v)),lw=Math.sqrt(dot(w,w)),c=d/(lv*lw),g=Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI;
+ need(Math.abs(g-Math.floor(g)-0.5)>0.03,'Winkel zu nah an ,5');
+ return T('vek','Winkel zwischen zwei Vektoren',`Bestimmen Sie den Winkel γ zwischen v = ${M(col(v))} und w = ${M(col(w))}.`,
+ [num('v′w =',fr(d)),num('γ in Grad (auf ganze Grad gerundet) =',Math.round(g),{tol:0.51})],
+ `cos γ = v′w / (‖v‖·‖w‖) = ${nstr(d)} / (√${dot(v,v)}·√${dot(w,w)}) ≈ ${nstr(c)}. Also γ = arccos(${nstr(c)}) ≈ ${nstr(Math.round(g*100)/100)}° ≈ ${Math.round(g)}°. Taschenrechner auf Grad (DEG) stellen!`)}
+function tOrth(a,b,c3){const x=fdiv(fr(-(a[0]*b[0]+a[1]*b[1])),fr(a[2]));
+ const A=[[fr(a[0]),fr(a[1])],[fr(b[0]),fr(b[1])]],r=[[fr(-a[2]*c3)],[fmul(fr(-c3),x)]];need(!fz(mdet(A)),'tOrth');
+ const s=mmul(minv(A),r),y=s[0][0],z=s[1][0];
+ return T('vek','Orthogonalität',`Bestimmen Sie x, y und z so, dass die Vektoren ${M(col(a))}, ${M([[b[0]],[b[1]],['x']])} und ${M([['y'],['z'],[c3]])} paarweise orthogonal sind.`,
+ [num('x =',x),num('y =',y),num('z =',z)],
+ `Orthogonal heißt: inneres Produkt = 0. Aus Vektor 1 · Vektor 2 = 0: ${poly([[a[0]*b[0]+a[1]*b[1],''],[a[2],'x']])} = 0 → x = ${fstr(x)}. Dann liefern Vektor 1 · Vektor 3 = 0 und Vektor 2 · Vektor 3 = 0 das LGS ${poly([[a[0],'y'],[a[1],'z']])} = ${fstr(r[0][0])} und ${poly([[b[0],'y'],[b[1],'z']])} = ${fstr(r[1][0])} mit der Lösung y = ${fstr(y)}, z = ${fstr(z)}.`)}
+function tIndep(vs){const A=mT(Fm(vs)),d=mdet(A);
+ return T('vek','Lineare Unabhängigkeit',`Sind die Vektoren ${vs.map(v=>M(col(v))).join(', ')} linear unabhängig? Schreiben Sie die Vektoren als Spalten in eine Matrix A.`,
+ [num('det(A) =',d),sc('Die Vektoren sind …',['linear unabhängig','linear abhängig'],fz(d)?1:0,true)],
+ `A = ${M(A)}, det(A) = ${fstr(d)}. `+(fz(d)?'det(A) = 0 → die Spalten sind linear abhängig (ein Vektor lässt sich als Linearkombination der anderen darstellen).':'det(A) ≠ 0 → die Spalten sind linear unabhängig und bilden eine Basis.'))}
+/* --- Matrizenrechnung --- */
+function tMul(A,B,title){const P=mmul(Fm(A),Fm(B));
+ return T('mat',title||'Matrixmultiplikation',`Gegeben sind A = ${M(A)} und B = ${M(B)}. Berechnen Sie AB.`,[mat('AB =',P)],
+ `A ist ${dim(A)}, B ist ${dim(B)} → konform, AB ist ${A.length}×${B[0].length}. Element (i, j) = i-te Zeile von A mal j-te Spalte von B (Falk-Schema). Z. B. Element (1, 1): ${A[0].map((a,k)=>pn(a)+'·'+pn(B[k][0])).join(' + ')} = ${fstr(P[0][0])}.`)}
+function tComm(A,B){const AB=mmul(Fm(A),Fm(B)),BA=mmul(Fm(B),Fm(A));
+ return T('mat','AB und BA',`Gegeben sind A = ${M(A)} und B = ${M(B)}.`,[mat('AB =',AB),mat('BA =',BA),sc('Gilt hier AB = BA?',['ja','nein'],meq(AB,BA)?0:1,true)],
+ `Die Matrixmultiplikation ist im Allgemeinen nicht kommutativ: AB ≠ BA. Deshalb unterscheidet man Prä- und Postmultiplikation.`)}
+function tExpand(A,B){const a=Fm(A),b=Fm(B),S=madd(a,b),D=msub(a,b),AA=mmul(a,a),BB=mmul(b,b),AB=mmul(a,b),BA=mmul(b,a);
+ return T('mat','Binomische Formeln bei Matrizen',`Gegeben sind A = ${M(A)} und B = ${M(B)}. Berechnen Sie:`,
+ [mat('(A + B)² =',mmul(S,S)),mat('A² + 2AB + B² =',madd(madd(AA,mscal(2,AB)),BB)),mat('(A − B)² =',mmul(D,D)),mat('A² − 2AB + B² =',madd(msub(AA,mscal(2,AB)),BB))],
+ `Richtig ausmultipliziert gilt (A + B)² = A² + AB + BA + B² und (A − B)² = A² − AB − BA + B². Weil hier AB = ${M(AB)} ≠ BA = ${M(BA)}, gelten die binomischen Formeln nicht.`)}
+function tPow(A){const a=Fm(A),a2=mmul(a,a);
+ return T('mat','Potenz einer Matrix',`Gegeben ist A = ${M(A)}. Berechnen Sie A² und A³.`,[mat('A² =',a2),mat('A³ =',mmul(a2,a))],`A² = A·A, A³ = A²·A. (Außerdem: A⁰ = I.)`)}
+function tAtA(A){const a=Fm(A),t=mT(a);
+ return T('bes','A′A und AA′',`Gegeben ist A = ${M(A)}. Berechnen Sie A′A und AA′.`,[mat('A′A =',mmul(t,a)),mat('AA′ =',mmul(a,t))],
+ `A′ = ${M(t)}. A′A ist ${A[0].length}×${A[0].length}, AA′ ist ${A.length}×${A.length}. Beide Produkte sind immer symmetrisch.`)}
+function tSolveX(A,B,left){const a=Fm(A),b=Fm(B),I=minv(a),X=left?mmul(I,b):mmul(b,I);
+ return T('inv','Matrixgleichung nach X auflösen',`Gegeben sind A = ${M(A)} und B = ${M(B)}. Lösen Sie die Gleichung ${left?'AX = B':'XA = B'} nach X auf.`,
+ [mat('A⁻¹ =',I),mat('X =',X)],
+ left?`Von links mit A⁻¹ multiplizieren: A⁻¹AX = A⁻¹B → X = A⁻¹B. (Nicht BA⁻¹ – die Reihenfolge zählt!)`:`Von rechts mit A⁻¹ multiplizieren: XAA⁻¹ = BA⁻¹ → X = BA⁻¹. (Nicht A⁻¹B – die Reihenfolge zählt!)`)}
+/* --- Idempotenz --- */
+const isIdem=A=>meq(mmul(A,A),A);
+function tIdemSC(mats,ans){const F=mats.map(Fm);need(F.filter(isIdem).length===1&&isIdem(F[ans]),'tIdemSC');
+ return T('bes','Idempotenz (Single Choice)','Welche der folgenden Matrizen ist idempotent?',[sc('',F.map(M),ans)],
+ `Idempotent heißt AA = A. Nur für ${M(F[ans])} ergibt das Produkt mit sich selbst wieder die Matrix. Jede Matrix kurz quadrieren und vergleichen.`)}
+function tIdemX(a,c){const x=fdiv(fr(a-a*a),fr(c)),A=[[fr(a),x],[fr(c),fr(1-a)]];need(isIdem(A),'tIdemX');
+ return T('bes','Idempotenz – Parameter bestimmen',`Für welchen Wert von x ist A = ${M([[a,'x'],[c,1-a]])} idempotent?`,[num('x =',x)],
+ `AA = A verlangt für Element (1, 1): ${pn(a)}·${pn(a)} + x·${pn(c)} = ${a} → x = ${fstr(x)}. Probe: ${M(A)}·${M(A)} = ${M(mmul(A,A))}.`)}
+function tIdemChk(A){const a=Fm(A),a2=mmul(a,a);
+ return T('bes','Ist A idempotent?',`Gegeben ist A = ${M(a)}. Berechnen Sie A² und entscheiden Sie.`,[mat('A² =',a2),sc('A ist …',['idempotent','nicht idempotent'],meq(a2,a)?0:1,true)],
+ `A² = ${M(a2)}. `+(meq(a2,a)?'Das ist wieder A, also ist A idempotent (AA = A).':'Das ist nicht A, also ist A nicht idempotent.'))}
+/* --- Determinante --- */
+function tDet(A,title){const F=Fm(A),n=A.length,d=mdet(F);let sol;
+ if(n===2)sol=`|A| = a₁₁a₂₂ − a₁₂a₂₁ = ${pn(A[0][0])}·${pn(A[1][1])} − ${pn(A[0][1])}·${pn(A[1][0])} = ${fstr(d)}.`;
+ else if(n===3){const g=(i,j)=>F[i][j],pr=(a,b,c)=>par(fstr(fmul(fmul(a,b),c)));
+  const pos=[pr(g(0,0),g(1,1),g(2,2)),pr(g(0,1),g(1,2),g(2,0)),pr(g(0,2),g(1,0),g(2,1))],neg=[pr(g(0,2),g(1,1),g(2,0)),pr(g(0,0),g(1,2),g(2,1)),pr(g(0,1),g(1,0),g(2,2))];
+  sol=`Regel von Sarrus: |A| = (a₁₁a₂₂a₃₃ + a₁₂a₂₃a₃₁ + a₁₃a₂₁a₃₂) − (a₁₃a₂₂a₃₁ + a₁₁a₂₃a₃₂ + a₁₂a₂₁a₃₃) = (${pos.join(' + ')}) − (${neg.join(' + ')}) = ${fstr(d)}.`}
+ else{let b={z:-1};for(let i=0;i<n;i++){const zr=F[i].filter(fz).length,zc=F.filter(r=>fz(r[i])).length;if(zr>b.z)b={z:zr,w:'Zeile',i};if(zc>b.z)b={z:zc,w:'Spalte',i}}
+  sol=`Die Regel von Sarrus gilt nur für 3×3-Matrizen. Hier hilft die Laplace-Entwicklung, am besten nach der ${b.i+1}. ${b.w} (${b.z} Nullen): |A| = Σ a<sub>ij</sub>·(−1)<sup>i+j</sup>·|A<sub>ij</sub>|. Nur die Elemente ungleich null liefern einen Beitrag; die Unterdeterminanten weiter entwickeln oder mit Sarrus berechnen. Ergebnis: |A| = ${fstr(d)}.`}
+ return T('det',title||`Determinante (${n}×${n})`,`Berechnen Sie die Determinante von A = ${M(A)}.`,[num('det(A) =',d)],sol)}
+function tDetProps(A,B){const a=Fm(A),b=Fm(B),n=A.length,dA=mdet(a),dB=mdet(b),sw=a.slice();sw[0]=a[n-1];sw[n-1]=a[0];
+ return T('det','Determinante – Rechenregeln',`Gegeben sind A = ${M(A)} und B = ${M(B)}. Berechnen Sie:`,
+ [num('det(A) =',dA),num(`Determinante der Matrix, die aus A durch Vertauschen der 1. und ${n}. Zeile entsteht:`,mdet(sw)),num('det(A′) =',mdet(mT(a))),num('det(2A) =',mdet(mscal(2,a))),num('det(B) =',dB),num('det(AB) =',mdet(mmul(a,b))),num('det(A + B) =',mdet(madd(a,b)))],
+ `det(A) = ${fstr(dA)}, det(B) = ${fstr(dB)} (Sarrus oder Laplace). Danach nur noch Rechenregeln: Zeilentausch → Vorzeichenwechsel (${fstr(fneg(dA))}); det(A′) = det(A); det(2A) = 2<sup>${n}</sup>·det(A) = ${fstr(fmul(fr(Math.pow(2,n)),dA))}; det(AB) = det(A)·det(B) = ${fstr(fmul(dA,dB))}. Achtung: det(A + B) ≠ det(A) + det(B) – hier muss A + B = ${M(madd(a,b))} wirklich ausgerechnet werden: ${fstr(mdet(madd(a,b)))}.`)}
+function tSingX(a,b,c){const x=fdiv(fr(a*b),fr(c));
+ return T('det','Singulär oder regulär?',`Für welchen Wert von x ist A = ${M([['x',a],[b,c]])} singulär?`,[num('x =',x)],
+ `A ist singulär ⇔ det(A) = 0. det(A) = ${poly([[c,'x'],[-a*b,'']])} = 0 → x = ${fstr(x)}. Für alle anderen x ist A regulär.`)}
+/* --- Inverse und Rang --- */
+function tInv(A,title){const F=Fm(A),n=A.length,d=mdet(F),I=minv(F);
+ const sol=n===2?`|A| = ${fstr(d)} ≠ 0 → A ist regulär. 2×2-Formel: A⁻¹ = (1/|A|)·${M([['a₂₂','−a₁₂'],['−a₂₁','a₁₁']])} = (1/${pn(d)})·${M([[F[1][1],fneg(F[0][1])],[fneg(F[1][0]),F[0][0]]])} = ${M(I)}.`
+  :`|A| = ${fstr(d)} ≠ 0 → A ist regulär. Entweder mit Gauß (A | I) → (I | A⁻¹) oder über die Co-Faktoren: b<sub>ij</sub> = (1/|A|)·(−1)<sup>i+j</sup>·|A<sub>ji</sub>| (Indizes vertauscht!). Ergebnis: A⁻¹ = ${M(I)}. Probe: A·A⁻¹ = I.`;
+ return T('inv',title||`Inverse einer Matrix (${n}×${n})`,`Gegeben ist A = ${M(A)}.`,[num('det(A) =',d),sc('A ist …',REG,0,true),mat('A⁻¹ = (Brüche z. B. als 3/7 eingeben)',I)],sol)}
+function tRank(A,title){const F=Fm(A),g=gauss(F),m=A.length,n=A[0].length,sq=m===n,parts=[num('rg(A) =',fr(g.rank))];
+ if(sq)parts.push(sc('A ist …',REG,g.rank===n?0:1,true));
+ return T('rang',title||`Rang einer Matrix (${m}×${n})`,`Bestimmen Sie den Rang von A = ${M(A)}.`,parts,
+ `Mit zulässigen Zeilenoperationen (Gauß) auf Zeilenstufenform bringen: ${M(g.E)} → ${g.rank} Zeile(n) ungleich null, also rg(A) = ${g.rank}. Maximal möglich wäre min(${m}, ${n}) = ${Math.min(m,n)}.`+(sq?(g.rank===n?` rg(A) = n → A ist regulär (det(A) = ${fstr(mdet(F))} ≠ 0).`:' rg(A) &lt; n → A ist singulär, det(A) = 0, es gibt keine Inverse.'):''))}
+/* --- LGS --- */
+const eqs=(A,b,v)=>A.map((r,i)=>`<div class="eq">${poly(r.map((c,j)=>[c,v[j]]))} = ${fstr(toF(b[i]))}</div>`).join('');
+function tLGS(A,b,o){o=o||{};const v=o.vars||VARS,a=Fm(A),bb=Fm(col(b)),d=mdet(a),n=A.length;need(!fz(d),'tLGS');
+ const X=mmul(minv(a),bb),dj=A.map((_,j)=>mdet(a.map((r,i)=>r.map((c,k)=>k===j?bb[i][0]:c))));
+ const parts=[num('det(A) =',d,o.tol?{tol:o.tol}:null)];
+ if(o.cramer)dj.forEach((x,j)=>parts.push(num(`|A(${j+1})| = (Spalte ${j+1} durch b ersetzt)`,x)));
+ if(o.inv)parts.push(mat('A⁻¹ =',minv(a)));
+ parts.push(mat(`Lösungsvektor (${v.slice(0,n).join(', ')})′ =`,X));
+ return T('lgs',o.title||'Lineares Gleichungssystem',(o.prompt||'Lösen Sie das lineare Gleichungssystem')+eqs(A,b,v)+(o.after||''),parts,
+ `In Matrixform Ax = b mit A = ${M(a)} und b = ${M(bb)}. det(A) = ${fstr(d)} ≠ 0 → genau eine Lösung. Cramersche Regel: ${dj.map((x,j)=>`|A(${j+1})| = ${fstr(x)}`).join(', ')} → ${dj.map((x,j)=>`${v[j]} = ${par(fstr(x))}/${par(fstr(d))} = ${fstr(X[j][0])}`).join(', ')}. Alternativ x = A⁻¹b mit A⁻¹ = ${M(minv(a))} oder Gauß-Elimination.`)}
+function tSolv(A,b){const a=Fm(A),ab=a.map((r,i)=>r.concat([toF(b[i])])),ra=gauss(a).rank,g=gauss(ab),m=A[0].length;
+ const ans=ra<g.rank?0:(ra===m?1:2);
+ return T('lgs','Lösbarkeit eines LGS','Untersuchen Sie die Lösbarkeit von'+eqs(A,b,VARS),
+ [num('rg(A) =',fr(ra)),num('rg(A | b) =',fr(g.rank)),sc('Das LGS hat …',['keine Lösung','genau eine Lösung','unendlich viele Lösungen'],ans,true)],
+ `Erweiterte Matrix (A | b) mit Gauß auf Stufenform: ${M(g.E)}. rg(A) = ${ra}, rg(A | b) = ${g.rank}, Zahl der Unbekannten m = ${m}. `+(ans===0?'rg(A) &lt; rg(A | b) → Widerspruch, keine Lösung.':ans===1?'rg(A) = rg(A | b) = m → genau eine Lösung.':`rg(A) = rg(A | b) = ${ra} &lt; m → unendlich viele Lösungen mit m − r = ${m-ra} frei wählbaren Variablen.`))}
+function tHom(A){const a=Fm(A),d=mdet(a);
+ return T('lgs','Homogenes LGS',`Betrachten Sie das homogene LGS Ax = 0 mit A = ${M(A)}.`,[num('det(A) =',d),sc('Das System hat …',['nur die triviale Lösung x = 0','auch nichttriviale Lösungen'],fz(d)?1:0,true)],
+ `det(A) = ${fstr(d)}. Ein homogenes LGS hat immer die triviale Lösung. Nichttriviale Lösungen gibt es genau dann, wenn rg(A) &lt; m, bei quadratischem A also wenn det(A) = 0. `+(fz(d)?'Hier ist det(A) = 0 → es gibt auch nichttriviale Lösungen.':'Hier ist det(A) ≠ 0 → nur die triviale Lösung.'))}
+/* --- Quadratische Formen --- */
+function tQF(p,q,r){const a=toF(p),b=fdiv(toF(q),fr(2)),c=toF(r),d=fsub(fmul(a,c),fmul(b,b));let k;
+ if(d.n>0)k=a.n>0?0:4;else if(d.n<0)k=2;else{need(a.n||c.n,'Nullform');k=(a.n>0||c.n>0)?1:3}
+ return T('qf','Quadratische Form (2 Variablen)',`Gegeben ist Q(x₁, x₂) = ${poly([[a,'x₁²'],[toF(q),'x₁x₂'],[c,'x₂²']])}.`,
+ [mat('Symmetrische Koeffizientenmatrix A =',[[a,b],[b,c]]),sc('Q ist …',DEF,k,true)],
+ `Q = ax₁² + 2bx₁x₂ + cx₂² → A = ${M([['a','b'],['b','c']])} = ${M([[a,b],[b,c]])} (der gemischte Koeffizient wird halbiert!). a = ${fstr(a)}, ac − b² = ${fstr(d)}. Regeln: ac − b² &gt; 0 und a &gt; 0 → positiv definit; ac − b² &gt; 0 und a &lt; 0 → negativ definit; ac − b² &lt; 0 → indefinit; ac − b² = 0 → semidefinit. Hier: ${DEF[k]}.`)}
+function tQF3(S){const a=Fm(S);need(meq(a,mT(a)),'nicht symmetrisch');const D=[a[0][0],mdet([[a[0][0],a[0][1]],[a[1][0],a[1][1]]]),mdet(a)];need(!fz(D[2]),'D3=0');
+ const k=D.every(x=>x.n>0)?0:(D[0].n<0&&D[1].n>0&&D[2].n<0)?4:2,two=x=>fmul(fr(2),x);
+ return T('qf','Quadratische Form (3 Variablen)',`Gegeben ist Q(x₁, x₂, x₃) = ${poly([[a[0][0],'x₁²'],[a[1][1],'x₂²'],[a[2][2],'x₃²'],[two(a[0][1]),'x₁x₂'],[two(a[0][2]),'x₁x₃'],[two(a[1][2]),'x₂x₃']])}.`,
+ [mat('Symmetrische Koeffizientenmatrix A =',a),num('1. Hauptminor D₁ =',D[0]),num('2. Hauptminor D₂ =',D[1]),num('3. Hauptminor D₃ = det(A) =',D[2]),sc('Q ist …',DEF,k,true)],
+ `Quadratische Glieder auf die Diagonale, gemischte Koeffizienten halbieren: A = ${M(a)}. Führende Hauptminoren: D₁ = ${fstr(D[0])}, D₂ = ${fstr(D[1])}, D₃ = ${fstr(D[2])}. Alle &gt; 0 → positiv definit; Vorzeichen abwechselnd −, +, − → negativ definit; sonst (bei D₃ ≠ 0) indefinit. Hier: ${DEF[k]}.`)}
+function tQFc(p,q,r,al,be){const a=toF(p),b=fdiv(toF(q),fr(2)),c=toF(r),H=[[fr(0),fr(al),fr(be)],[fr(al),a,b],[fr(be),b,c]],d=mdet(H);need(!fz(d),'tQFc det=0');
+ return T('qf','Quadratische Form unter Nebenbedingung',`Gegeben ist Q(x₁, x₂) = ${poly([[a,'x₁²'],[toF(q),'x₁x₂'],[c,'x₂²']])} unter der Nebenbedingung ${poly([[al,'x₁'],[be,'x₂']])} = 0.`,
+ [mat('Geränderte Koeffizientenmatrix =',H),num('Determinante der geränderten Matrix =',d),sc('Unter der Nebenbedingung ist Q …',['positiv definit','negativ definit'],d.n<0?0:1,true)],
+ `Geränderte Matrix: ${M([[0,'α','β'],['α','a','b'],['β','b','c']])} = ${M(H)} mit Determinante ${fstr(d)}. Regel (eine Nebenbedingung, zwei Variablen): Determinante &lt; 0 → positiv definit unter der NB; Determinante &gt; 0 → negativ definit unter der NB. Hier: ${d.n<0?'positiv':'negativ'} definit. Kontrolle: NB nach einer Variablen auflösen und in Q einsetzen.`)}
+/* ===== Oberfläche ===== */
+const $=(s,r)=>(r||document).querySelector(s);
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function parseNum(s){s=String(s).replace(/\s/g,'').replace(/−/g,'-').replace(/,/g,'.');const re=/^[+-]?(\d+\.?\d*|\.\d+)$/;
+ if(s.indexOf('/')>=0){const p=s.split('/');if(p.length!==2||!re.test(p[0])||!re.test(p[1])||parseFloat(p[1])===0)return NaN;return parseFloat(p[0])/parseFloat(p[1])}
+ return re.test(s)?parseFloat(s):NaN}
+function ansStr(p){if(p.t==='num'){const a=p.ans;if(typeof a==='number')return nstr(Math.round(a*100)/100);return fstr(a)+(a.d!==1?' (≈ '+nstr(Math.round(fval(a)*1000)/1000)+')':'')}
+ if(p.t==='mat')return M(p.ans);if(p.t==='sc')return p.opts[p.ans];return p.ans.map(k=>p.opts[k]).join(' &nbsp;|&nbsp; ')}
+let UID=0;
+function renderTask(task,mode,idx){
+ const box=el('div','task');
+ box.appendChild(el('h3','',(idx?idx+'. ':'')+task.title+` <span class="mut">· ${TOP[task.topic]}${mode==='test'?' · '+task.pts+' P.':''}</span>`));
+ box.appendChild(el('div','prompt',task.prompt));
+ const mark=(i,ok)=>{i.classList.remove('okin','badin');i.classList.add(ok?'okin':'badin')};
+ const ctrls=task.parts.map(p=>{const d=el('div','part'),c={ins:[]};if(p.label)d.appendChild(el('div','plabel',p.label));
+  if(p.t==='num'){const i=el('input','in num');i.type='text';i.autocomplete='off';i.placeholder='z. B. 3/7 oder 0,25';d.appendChild(i);c.ins.push(i)}
+  else if(p.t==='mat'){const tb=el('table','mgrid');p.ans.forEach(row=>{const tr=el('tr');row.forEach(()=>{const td=el('td'),i=el('input','in cell');i.type='text';i.autocomplete='off';td.appendChild(i);tr.appendChild(td);c.ins.push(i)});tb.appendChild(tr)});d.appendChild(tb)}
+  else{c.order=p.opts.map((_,k)=>k);if(!p.fix)shuffle(c.order);c.labs=[];const name='o'+(++UID);
+   if(p.t==='mc')d.appendChild(el('div','mut','Mehrere Antworten können richtig sein.'));
+   c.order.forEach(k=>{const l=el('label','opt'),i=el('input');i.type=p.t==='sc'?'radio':'checkbox';i.name=name;l.appendChild(i);l.appendChild(el('span','',p.opts[k]));d.appendChild(l);c.ins.push(i);c.labs.push(l)})}
+  c.fb=el('div','fb');d.appendChild(c.fb);box.appendChild(d);return c});
+ function grade(reveal){let sum=0;
+  task.parts.forEach((p,k)=>{const c=ctrls[k];let s=0;
+   if(p.t==='num'){const v=parseNum(c.ins[0].value),ok=!isNaN(v)&&Math.abs(v-fval(p.ans))<=(p.tol||0.006);s=ok?1:0;mark(c.ins[0],ok)}
+   else if(p.t==='mat'){const flat=[].concat.apply([],p.ans);let n=0;flat.forEach((a,j)=>{const v=parseNum(c.ins[j].value),ok=!isNaN(v)&&Math.abs(v-fval(a))<=0.006;if(ok)n++;mark(c.ins[j],ok)});s=n/flat.length}
+   else{let ok=true,any=false;c.labs.forEach((l,j)=>{const should=p.t==='sc'?c.order[j]===p.ans:p.ans.indexOf(c.order[j])>=0,is=c.ins[j].checked;if(is)any=true;if(should!==is)ok=false;
+     l.classList.remove('optok','optbad');if(is)l.classList.add(should?'optok':'optbad');else if(reveal&&should)l.classList.add('optok')});s=ok&&any?1:0}
+   c.fb.className='fb '+(s===1?'ok':'bad');c.fb.textContent=s===1?'✓ richtig':(s>0?'teilweise richtig ('+Math.round(s*100)+' %)':'✗ nicht richtig');sum+=s});
+  return sum/task.parts.length}
+ let solEl=null;
+ function showSol(){if(solEl)return;solEl=el('div','sol','<strong>Richtige Antwort'+(task.parts.length>1?'en':'')+':</strong>'+task.parts.map(p=>'<div>'+(p.label?p.label+' ':'')+'<strong>'+ansStr(p)+'</strong></div>').join('')+'<div style="margin-top:.5rem"><strong>Lösungsweg:</strong> '+task.sol+'</div>');box.appendChild(solEl)}
+ function lock(){ctrls.forEach(c=>c.ins.forEach(i=>i.disabled=true))}
+ if(mode!=='test'){const b=el('div','btns'),chk=el('button','pri','Prüfen'),sb=el('button','','Lösung zeigen');b.style.margin='.6rem 0 0';
+  chk.onclick=()=>grade(false);sb.onclick=()=>{grade(true);showSol()};b.appendChild(chk);b.appendChild(sb);box.appendChild(b);
+  box.addEventListener('keydown',e=>{if(e.key==='Enter')grade(false)})}
+ return{box,grade,showSol,lock}}
+/* ===== Speicher ===== */
+const KEY='la_lernapp_v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+const bonus=p=>p>=85?3:p>=70?2:p>=50?1:0;
+/* ===== Multiple-Choice-Fragen ===== */
+const MCQ=[];
+function q(topic,text,opts,ans,expl){const multi=Array.isArray(ans);MCQ.push(T(topic,multi?'Multiple Choice':'Single Choice',text,[multi?mc('',opts,ans):sc('',opts,ans)],expl))}
+// Vektoren
+q('vek','Zwei Vektoren v und w (beide ungleich dem Nullvektor) sind orthogonal, wenn …',['v′w = 0','v′w = 1','‖v‖ = ‖w‖','v = λw für eine Zahl λ'],0,'Orthogonal (senkrecht) heißt: inneres Produkt v′w = 0, also cos γ = 0 und γ = 90°.');
+q('vek','Wie lang ist der Vektor v = (3, 4)′?',['5','7','25','√7'],0,'‖v‖ = √(v′v) = √(3² + 4²) = √25 = 5.');
+q('vek','Welcher Vektor ist der normierte Vektor zu v = (3, 4)′?',['(0,6; 0,8)′','(3/7; 4/7)′','(1; 1)′','(0,75; 1)′'],0,'Normieren heißt durch die Länge teilen: ṽ = v/‖v‖ = (3/5; 4/5)′. Der normierte Vektor hat die Länge 1.');
+q('vek','Für zwei Vektoren gilt v′w &lt; 0. Der Winkel γ zwischen ihnen ist …',['größer als 90° (stumpf)','genau 90°','kleiner als 90° (spitz)','nicht definiert'],0,'cos γ = v′w/(‖v‖·‖w‖). Der Nenner ist positiv, also cos γ &lt; 0 und damit γ &gt; 90°.');
+q('vek','Die Vektoren v = (1, 2)′ und w = (2, 4)′ sind …',['linear abhängig','linear unabhängig','orthogonal','orthonormal'],0,'w = 2v, also ist ein Vektor ein Vielfaches des anderen → linear abhängig. (v′w = 10 ≠ 0, also nicht orthogonal.)');
+q('vek','Welche Menge von Vektoren bildet eine Basis des ℝ³?',['drei linear unabhängige Vektoren des ℝ³','zwei orthogonale Vektoren des ℝ³','vier beliebige Vektoren des ℝ³','drei beliebige Vektoren des ℝ³'],0,'Eine Basis des ℝⁿ besteht aus genau n linear unabhängigen Vektoren. Vier Vektoren im ℝ³ sind immer linear abhängig.');
+q('vek','ι sei der n×1-Vektor aus lauter Einsen, x ein n×1-Vektor. Dann ist ι′x …',['die Summe x₁ + … + xₙ','die Summe der Quadrate x₁² + … + xₙ²','eine n×n-Matrix','der Vektor x selbst'],0,'ι′x = 1·x₁ + … + 1·xₙ = Σxᵢ. Die Summe der Quadrate wäre x′x.');
+q('vek','Welche Wahl der Gewichte macht λ₁v + λ₂w zu einer Konvexkombination?',['λ₁ = 0,3 und λ₂ = 0,7','λ₁ = 2 und λ₂ = −1','λ₁ = 0,5 und λ₂ = 0,6','λ₁ = −0,5 und λ₂ = 1,5'],0,'Konvexkombination: alle Gewichte ≥ 0 und Summe der Gewichte = 1.');
+q('vek','Welche Vektorpaare sind orthonormal?',['(1; 0)′ und (0; 1)′','(0,6; 0,8)′ und (−0,8; 0,6)′','(1; 1)′ und (1; −1)′','(2; 0)′ und (0; 2)′'],[0,1],'Orthonormal = orthogonal UND beide Länge 1. (1; 1)′ und (1; −1)′ sowie (2; 0)′ und (0; 2)′ sind zwar orthogonal, aber nicht normiert.');
+q('vek','v und w seien n×1-Vektoren (n ≥ 2). Welche Aussagen sind richtig?',['Das innere Produkt v′w ist ein Skalar.','Das äußere Produkt vw′ ist eine n×n-Matrix.','Es gilt v′w = w′v.','Es gilt immer vw′ = wv′.'],[0,1,2],'v′w ist (1×n)(n×1) → Skalar und kommutativ. vw′ ist (n×1)(1×n) → n×n-Matrix; es gilt (vw′)′ = wv′, im Allgemeinen ist das nicht dasselbe wie vw′.');
+// Matrizenrechnung
+q('mat','A ist eine 3×4-Matrix, B eine 4×2-Matrix. Welche Dimension hat AB?',['3×2','4×4','2×3','AB ist nicht definiert'],0,'(n×m)(m×p) → (n×p): Die inneren Dimensionen (4 und 4) müssen übereinstimmen, die äußeren (3 und 2) bestimmen das Ergebnis.');
+q('mat','A ist 2×3, B ist 3×3, C ist 3×2. Welche Produkte sind definiert?',['AB','BA','CA','CB'],[0,2],'AB: (2×3)(3×3) ✓. BA: (3×3)(2×3) ✗. CA: (3×2)(2×3) ✓. CB: (3×2)(3×3) ✗.');
+q('mat','Für konforme Matrizen gilt (AB)′ = …',['B′A′','A′B′','AB','BA'],0,'Beim Transponieren eines Produkts dreht sich die Reihenfolge um: (AB)′ = B′A′.');
+q('mat','Welche Rechenregeln gelten allgemein (für konforme Matrizen)?',['(AB)C = A(BC)','A(B + C) = AB + AC','AB = BA','(A + B)′ = A′ + B′'],[0,1,3],'Assoziativ- und Distributivgesetz gelten, ebenso (A + B)′ = A′ + B′. Die Multiplikation ist aber im Allgemeinen nicht kommutativ: AB ≠ BA.');
+q('mat','A und B seien quadratische Matrizen gleicher Ordnung. Dann ist (A + B)² = …',['A² + AB + BA + B²','A² + 2AB + B²','A² + B²','A² + 2BA + B²'],0,'(A + B)(A + B) = A² + AB + BA + B². Zusammenfassen zu 2AB geht nur, wenn AB = BA.');
+q('mat','A und B seien quadratische Matrizen gleicher Ordnung. Dann ist (A − B)(A + B) = …',['A² + AB − BA − B²','A² − B²','A² − AB + BA − B²','A² − 2AB + B²'],0,'Ausmultiplizieren unter Beachtung der Reihenfolge: A·A + A·B − B·A − B·B.');
+q('mat','x sei ein n×1-Vektor. Dann ist x′x …',['die Summe der Quadrate Σxᵢ²','die Summe Σxᵢ','eine n×n-Matrix','immer gleich 1'],0,'x′x = x₁² + … + xₙ² (ein Skalar). Die n×n-Matrix wäre xx′.');
+q('mat','A sei eine quadratische Matrix. Dann ist A⁰ = …',['die Einheitsmatrix I','die Nullmatrix','A','nicht definiert'],0,'Per Definition A⁰ = I – analog zu a⁰ = 1 bei Zahlen.');
+q('mat','Vereinfachen Sie (alle Matrizen quadratisch und regulär): (ABC)′(DC′(AB)′)⁻¹ = …',['D⁻¹','(AB)′','C⁻¹','DC′'],0,'(ABC)′ = C′(AB)′ und (DC′(AB)′)⁻¹ = ((AB)′)⁻¹(C′)⁻¹D⁻¹. Produkt: C′(AB)′((AB)′)⁻¹(C′)⁻¹D⁻¹ = D⁻¹.');
+q('mat','Vereinfachen Sie (alle Matrizen quadratisch und regulär): ((BA)⁻¹)′(CBA)′ = …',['C′','(AB)′','C⁻¹','A′B′C′'],0,'(CBA)′ = (BA)′C′ und ((BA)⁻¹)′ = ((BA)′)⁻¹. Produkt: ((BA)′)⁻¹(BA)′C′ = C′.');
+q('mat','Vereinfachen Sie (A, B regulär): (A′B′)′(BA)⁻¹C = …',['C','BAC','(AB)⁻¹C','A′B′C'],0,'(A′B′)′ = (B′)′(A′)′ = BA. Also BA(BA)⁻¹C = IC = C.');
+q('mat','Vereinfachen Sie (A, B quadratisch und regulär): A(BA)⁻¹B = …',['I','AB','(AB)⁻¹','BA'],0,'(BA)⁻¹ = A⁻¹B⁻¹. Also A·A⁻¹·B⁻¹·B = I·I = I.');
+q('mat','A sei regulär. Lösen Sie AX + B = C nach X auf.',['X = A⁻¹(C − B)','X = (C − B)A⁻¹','X = (C − B)/A','X = A(C − B)'],0,'AX = C − B, dann von LINKS mit A⁻¹ multiplizieren: X = A⁻¹(C − B). Eine Division durch Matrizen gibt es nicht.');
+q('mat','A sei regulär. Lösen Sie XA = B nach X auf.',['X = BA⁻¹','X = A⁻¹B','X = AB','X = B′A⁻¹'],0,'Von RECHTS mit A⁻¹ multiplizieren: XAA⁻¹ = BA⁻¹ → X = BA⁻¹.');
+q('mat','A sei regulär. Lösen Sie A′X + B = C nach X auf.',['X = (A⁻¹)′(C − B)','X = (C − B)(A⁻¹)′','X = A′(C − B)','X = A⁻¹(C − B)'],0,'A′X = C − B → X = (A′)⁻¹(C − B), und (A′)⁻¹ = (A⁻¹)′.');
+q('mat','A sei regulär. Lösen Sie A′X′ = B nach X auf.',['X = B′A⁻¹','X = A⁻¹B′','X = (A′)⁻¹B','X = BA⁻¹'],0,'X′ = (A′)⁻¹B. Transponieren: X = B′((A′)⁻¹)′ = B′A⁻¹.');
+// Besondere Matrizen
+q('bes','Eine quadratische Matrix A heißt idempotent, wenn …',['AA = A','A′ = A','AA = I','A⁻¹ = A′'],0,'Idempotent: A·A = A. (A′ = A wäre symmetrisch.)');
+q('bes','X sei eine m×n-Matrix und P = X(X′X)⁻¹X′. Welche Aussagen sind richtig?',['P ist symmetrisch','P ist idempotent','P ist eine m×m-Matrix','P ist eine n×n-Matrix'],[0,1,2],'Dimension: (m×n)(n×n)(n×m) = m×m. P′ = X((X′X)⁻¹)′X′ = P (symmetrisch). PP = X(X′X)⁻¹X′X(X′X)⁻¹X′ = X(X′X)⁻¹X′ = P (idempotent).');
+q('bes','B sei eine beliebige n×m-Matrix. Welche Aussagen sind richtig?',['B′B ist symmetrisch','BB′ ist symmetrisch','B′B ist eine m×m-Matrix','B′B = BB′ gilt immer'],[0,1,2],'(B′B)′ = B′(B′)′ = B′B, analog für BB′. B′B ist (m×n)(n×m) = m×m, BB′ ist n×n – die beiden sind im Allgemeinen nicht gleich.');
+q('bes','Welche Eigenschaften hat die Einheitsmatrix I?',['Sie ist eine Diagonalmatrix','Sie ist symmetrisch','Sie ist idempotent','Ihre Determinante ist 0'],[0,1,2],'I·I = I (idempotent), I′ = I (symmetrisch), und det(I) = 1, nicht 0.');
+q('bes','A sei idempotent und regulär. Dann gilt …',['A = I','A = 0 (Nullmatrix)','det(A) = 0','A ist nicht symmetrisch'],0,'AA = A von links mit A⁻¹ multiplizieren: A = I. Die Einheitsmatrix ist die einzige reguläre idempotente Matrix.');
+q('bes','A sei idempotent. Dann ist (I − A)(I − A) = …',['I − A','I','A','I − 2A'],0,'(I − A)(I − A) = I − A − A + AA = I − 2A + A = I − A. Also ist auch I − A idempotent.');
+q('bes','Eine Matrix A ist symmetrisch, wenn …',['A′ = A','AA = A','A⁻¹ = A','A nur Nullen außerhalb der Diagonale hat'],0,'Symmetrisch: A′ = A, d. h. aᵢⱼ = aⱼᵢ. Jede Diagonalmatrix ist symmetrisch, aber nicht jede symmetrische Matrix ist diagonal.');
+MCQ.push(tIdemSC([[[1,1],[0,1]],[[2,-2],[1,-1]],[[0,1],[1,0]],[[2,0],[0,2]]],1));
+MCQ.push(tIdemSC([[[fr(1,2),fr(1,2)],[fr(1,2),fr(1,2)]],[[1,1],[1,1]],[[0,1],[0,0]],[[fr(1,2),fr(-1,2)],[fr(1,2),fr(1,2)]]],0));
+// Determinante
+q('det','A sei eine 3×3-Matrix mit det(A) = 5. Dann ist det(2A) = …',['40','10','30','5'],0,'det(kA) = kⁿ·det(A), hier 2³·5 = 40.');
+q('det','A sei eine 4×4-Matrix mit det(A) = 3. Dann ist det(−A) = …',['3','−3','−12','12'],0,'det(−A) = (−1)⁴·det(A) = 3.');
+q('det','A sei eine 2×2-Matrix mit det(A) = 6. Dann ist det(A⁻¹) = …',['1/6','−6','6','0'],0,'det(A⁻¹) = 1/det(A) = 1/6.');
+q('det','A und B seien 3×3-Matrizen mit det(A) = 4 und det(B) = −2. Dann ist det(A·B⁻¹) = …',['−2','−8','2','−1/2'],0,'det(AB⁻¹) = det(A)·det(B⁻¹) = 4·(1/(−2)) = −2.');
+q('det','Welche Rechenregeln gelten für n×n-Matrizen A und B?',['det(AB) = det(A)·det(B)','det(A′) = det(A)','det(A⁻¹) = 1/det(A) (A regulär)','det(A + B) = det(A) + det(B)'],[0,1,2],'Für Summen gibt es keine einfache Regel: im Allgemeinen det(A + B) ≠ det(A) + det(B).');
+q('det','Vertauscht man in einer Matrix zwei Zeilen, dann …',['wechselt die Determinante das Vorzeichen','bleibt die Determinante unverändert','wird die Determinante null','verdoppelt sich die Determinante'],0,'Zeilen- oder Spaltentausch → Vorzeichenwechsel der Determinante.');
+q('det','Addiert man das Vielfache einer Zeile zu einer anderen Zeile, dann …',['bleibt die Determinante unverändert','wechselt die Determinante das Vorzeichen','wird die Determinante mit dem Vielfachen multipliziert','wird die Determinante null'],0,'Diese Zeilenoperation ändert die Determinante nicht – deshalb kann man vor dem Entwickeln Nullen erzeugen.');
+q('det','Was bedeutet det(A) = 0 für eine n×n-Matrix A?',['Die Spalten von A sind linear abhängig','A ist singulär','A besitzt eine Inverse','rg(A) = n'],[0,1],'det(A) = 0 ⇔ Spalten (und Zeilen) linear abhängig ⇔ A singulär ⇔ rg(A) &lt; n ⇔ es gibt keine Inverse.');
+q('det','Für welche Matrizen darf die Regel von Sarrus verwendet werden?',['nur für 3×3-Matrizen','für alle quadratischen Matrizen','für 3×3- und 4×4-Matrizen','für alle Matrizen mit det ≠ 0'],0,'Sarrus gilt nur für Ordnung 3. Ab Ordnung 4: Laplace-Entwicklung.');
+q('det',`Wie groß ist die Determinante der Dreiecksmatrix ${M([[2,5,7],[0,3,1],[0,0,4]])}?`,['24','9','0','14'],0,'Laplace-Entwicklung jeweils nach der 1. Spalte zeigt: Bei Dreiecksmatrizen ist die Determinante das Produkt der Diagonalelemente: 2·3·4 = 24.');
+// Inverse
+q('inv','Welche Rechenregeln gelten für reguläre n×n-Matrizen A und B?',['(AB)⁻¹ = B⁻¹A⁻¹','(A′)⁻¹ = (A⁻¹)′','(A⁻¹)⁻¹ = A','(A + B)⁻¹ = A⁻¹ + B⁻¹'],[0,1,2],'Beim Invertieren eines Produkts dreht sich die Reihenfolge um. Für Summen gibt es keine solche Regel.');
+q('inv','Eine Matrix A besitzt genau dann eine Inverse, wenn …',['A quadratisch ist und det(A) ≠ 0','A quadratisch ist','A symmetrisch ist','det(A) = 0'],0,'Nur quadratische Matrizen mit det(A) ≠ 0 (regulär, voller Rang) sind invertierbar. Die Inverse ist dann eindeutig.');
+q('inv',`Wie lautet die Inverse von A = ${M([['a','b'],['c','d']])} (mit ad − bc ≠ 0)?`,[`1/(ad − bc) · ${M([['d','−b'],['−c','a']])}`,`1/(ad − bc) · ${M([['a','−b'],['−c','d']])}`,`1/(ad − bc) · ${M([['d','−c'],['−b','a']])}`,`(ad − bc) · ${M([['d','−b'],['−c','a']])}`],0,'Hauptdiagonale tauschen, Nebendiagonale mit Minus versehen, durch die Determinante teilen.');
+q('inv',`Wie lautet die Inverse von ${M([[2,0],[0,5]])}?`,[M([['1/2',0],[0,'1/5']]),M([[-2,0],[0,-5]]),M([[5,0],[0,2]]),M([[0,'1/5'],['1/2',0]])],0,'Bei Diagonalmatrizen werden einfach die Diagonalelemente invertiert.');
+q('inv','A sei regulär. Was ist A⁻¹A?',['die Einheitsmatrix I','die Nullmatrix','A²','A′'],0,'Definition der Inversen: AA⁻¹ = A⁻¹A = I.');
+q('inv','Beim Gauß-Verfahren zur Bestimmung der Inversen formt man um …',['(A | I) → (I | A⁻¹)','(A | I) → (A⁻¹ | I)','(A | b) → (I | A⁻¹)','(I | A) → (A | I)'],0,'Man schreibt A und I nebeneinander und wendet Zeilenoperationen an, bis links die Einheitsmatrix steht; rechts steht dann A⁻¹.');
+// Rang
+q('rang','Eine 3×5-Matrix hat höchstens den Rang …',['3','5','15','2'],0,'rg(A) ≤ min(Zeilenzahl, Spaltenzahl) = min(3, 5) = 3.');
+q('rang','Welche Aussagen über den Rang sind richtig?',['rg(A) = rg(A′)','rg(A′A) = rg(A)','Eine n×n-Matrix ist genau dann regulär, wenn rg(A) = n','Der Rang kann größer sein als die Zeilenzahl'],[0,1,2],'Der Rang ist die maximale Anzahl linear unabhängiger Spalten = maximale Anzahl linear unabhängiger Zeilen, also höchstens min(m, n).');
+q('rang','A sei eine 4×4-Matrix mit det(A) = 0. Dann gilt …',['rg(A) ≤ 3','rg(A) = 4','rg(A) = 0','A ist regulär'],0,'det(A) = 0 ⇔ A singulär ⇔ rg(A) &lt; n. Über den genauen Rang sagt die Determinante nichts.');
+q('rang',`Welchen Rang hat ${M([[1,2,3],[2,4,6]])}?`,['1','2','3','0'],0,'Die 2. Zeile ist das Doppelte der 1. Zeile → nur eine linear unabhängige Zeile → Rang 1.');
+q('rang','Der Rang einer Matrix ist …',['die maximale Anzahl linear unabhängiger Spalten (bzw. Zeilen)','die Anzahl der Zeilen','die Anzahl der Elemente ungleich null','der Wert der Determinante'],0,'Zeilenrang = Spaltenrang = Rang.');
+// LGS
+q('lgs','Für ein LGS Ax = b gilt rg(A) &lt; rg(A | b). Dann hat das System …',['keine Lösung','genau eine Lösung','unendlich viele Lösungen','nur die triviale Lösung'],0,'Die erweiterte Matrix hat einen höheren Rang → eine Zeile der Form 0 = c mit c ≠ 0 → Widerspruch.');
+q('lgs','Ein lösbares LGS mit 4 Unbekannten hat rg(A) = rg(A | b) = 2. Wie viele Variablen sind frei wählbar?',['2','0','4','1'],0,'Freie Variablen = m − r = 4 − 2 = 2. Es gibt unendlich viele Lösungen.');
+q('lgs','Ein LGS mit m Unbekannten hat genau eine Lösung, wenn …',['rg(A) = rg(A | b) = m','rg(A) &lt; rg(A | b)','rg(A) = rg(A | b) &lt; m','b = 0'],0,'Lösbar (gleiche Ränge) und keine freien Variablen (Rang = Anzahl der Unbekannten).');
+q('lgs','Das homogene LGS Ax = 0 mit quadratischer Matrix A hat nichttriviale Lösungen genau dann, wenn …',['det(A) = 0','det(A) ≠ 0','A symmetrisch ist','A regulär ist'],0,'Nichttriviale Lösungen nur bei rg(A) &lt; m, bei quadratischem A also genau bei det(A) = 0.');
+q('lgs','Welche Zeilenoperationen sind beim Gauß-Verfahren zulässig?',['Vertauschen zweier Zeilen','Multiplikation einer Zeile mit einer Zahl ≠ 0','Addition des Vielfachen einer Zeile zu einer anderen Zeile','Multiplikation einer Zeile mit 0'],[0,1,2],'Die Multiplikation mit 0 würde eine Gleichung vernichten und die Lösungsmenge verändern.');
+q('lgs','Bei der Cramerschen Regel gilt xⱼ = |A(j)| / |A|. Dabei ist A(j) die Matrix, in der …',['die j-te Spalte von A durch b ersetzt wurde','die j-te Zeile von A durch b′ ersetzt wurde','die j-te Spalte von A gestrichen wurde','die j-te Zeile und j-te Spalte gestrichen wurden'],0,'Die j-te Spalte der Koeffizientenmatrix wird durch die rechte Seite b ersetzt.');
+q('lgs','A sei regulär. Die Lösung von Ax = b ist …',['x = A⁻¹b','x = bA⁻¹','x = b/A','x = Ab'],0,'Von links mit A⁻¹ multiplizieren. bA⁻¹ ist nicht einmal konform (b ist n×1).');
+q('lgs','Welche Aussagen über homogene LGS Ax = 0 sind richtig?',['x = 0 ist immer eine Lösung','Ist A quadratisch und regulär, gibt es nur die triviale Lösung','Ein homogenes LGS kann unlösbar sein','Ein homogenes LGS hat nie unendlich viele Lösungen'],[0,1],'Homogene Systeme sind immer lösbar (triviale Lösung). Bei rg(A) &lt; m gibt es zusätzlich unendlich viele nichttriviale Lösungen.');
+// Quadratische Formen
+q('qf','Q(x, y) = ax² + 2bxy + cy² ist positiv definit, wenn …',['a &gt; 0 und ac − b² &gt; 0','a &lt; 0 und ac − b² &gt; 0','ac − b² &lt; 0','a &gt; 0 und c &gt; 0'],0,'Positiv definit: a &gt; 0 und ac − b² &gt; 0. Nur a &gt; 0 und c &gt; 0 reicht nicht (Beispiel: x² + 6xy + y² ist indefinit).');
+q('qf','Welche symmetrische Matrix gehört zu Q = 3x₁² + 4x₁x₂ + 5x₂²?',[M([[3,2],[2,5]]),M([[3,4],[4,5]]),M([[3,4],[0,5]]),M([[3,2],[2,-5]])],0,'Die quadratischen Koeffizienten kommen auf die Diagonale, der gemischte Koeffizient wird halbiert und symmetrisch verteilt.');
+q('qf','Für Q = ax² + 2bxy + cy² gilt ac − b² &lt; 0. Dann ist Q …',['indefinit','positiv definit','negativ definit','positiv semidefinit'],0,'Negative Determinante der Koeffizientenmatrix → Q nimmt positive und negative Werte an.');
+q('qf','Die führenden Hauptminoren einer symmetrischen 3×3-Matrix A haben die Vorzeichen D₁ &lt; 0, D₂ &gt; 0, D₃ &lt; 0. Dann ist x′Ax …',['negativ definit','positiv definit','indefinit','positiv semidefinit'],0,'Alle Dₖ &gt; 0 → positiv definit. Abwechselnd −, +, − … (beginnend mit minus) → negativ definit.');
+q('qf','Q(x₁, x₂) = x₁² − x₂² ist …',['indefinit','positiv definit','negativ definit','positiv semidefinit'],0,'Q(1, 0) = 1 &gt; 0 und Q(0, 1) = −1 &lt; 0. Formal: a = 1, b = 0, c = −1 → ac − b² = −1 &lt; 0.');
+q('qf','Q(x₁, x₂) = x₁² − 2x₁x₂ + x₂² ist …',['positiv semidefinit','positiv definit','indefinit','negativ semidefinit'],0,'Q = (x₁ − x₂)² ≥ 0, aber Q = 0 z. B. für x₁ = x₂ = 1. Formal: a = 1 &gt; 0, ac − b² = 1 − 1 = 0.');
+q('qf','Eine quadratische Form in zwei Variablen mit einer linearen Nebenbedingung: Die Determinante der geränderten Matrix ist negativ. Dann ist Q unter der Nebenbedingung …',['positiv definit','negativ definit','indefinit','ohne Aussage'],0,'Geränderte Determinante &lt; 0 → positiv definit unter der NB; &gt; 0 → negativ definit unter der NB.');
+q('qf','A sei quadratisch, aber nicht symmetrisch. Welche symmetrische Matrix B erfüllt x′Ax = x′Bx für alle x?',['B = 0,5·(A + A′)','B = A′A','B = A + A′','B = 0,5·(A − A′)'],0,'Jede quadratische Form lässt sich mit der symmetrischen Matrix B = ½(A + A′) schreiben.');
+q('qf',`Wie lautet die geränderte Matrix zu Q = ax₁² + 2bx₁x₂ + cx₂² unter der Nebenbedingung αx₁ + βx₂ = 0?`,[M([[0,'α','β'],['α','a','b'],['β','b','c']]),M([['a','b','α'],['b','c','β'],['α','β',1]]),M([[1,'α','β'],['α','a','b'],['β','b','c']]),M([[0,'a','b'],['α','b','c'],['β',0,0]])],0,'Links oben steht eine Null, daneben bzw. darunter die Koeffizienten der Nebenbedingung, rechts unten die Koeffizientenmatrix von Q.');
+/* ===== Rechenaufgaben ===== */
+const H=fr(1,2),D3=fr(1,3);
+const CALC=[
+ tLin([2,-1,3],[1,4,-2],3,-2),
+ tVec([1,2,2],[3,0,-4]),tVec([2,-3,1],[4,1,-2]),
+ tAngle([-3,2],[4,-2]),tAngle([4,4],[-4,-4]),tAngle([-2,4],[3,4]),tAngle([1,2,2],[2,0,1]),
+ tOrth([4,-4,-2],[2,3],2),tOrth([2,1,-2],[1,2],1),
+ tIndep([[1,2,1],[0,1,3],[2,5,5]]),tIndep([[1,0,2],[2,1,0],[0,1,1]]),
+ tMul([[1,2,0],[-1,3,2]],[[2,1],[0,-1],[4,3]]),tMul([[2,-1],[0,3],[1,4]],[[1,0,2],[3,-2,1]]),
+ tMul([[2],[-1],[3],[0]],[[1,4,-2,2]],'Matrixmultiplikation (Spalte mal Zeile)'),
+ tMul([[1,0,2,-1],[3,1,0,2],[0,-2,1,1]],[[2,1,0],[0,1,-1],[1,0,3],[-2,2,1]]),
+ tComm([[1,2],[3,4]],[[0,1],[1,0]]),
+ tExpand([[4,4],[3,0]],[[3,4],[2,3]]),tExpand([[1,2],[0,1]],[[2,0],[1,3]]),
+ tPow([[1,1],[0,2]]),
+ tSolveX([[2,1],[5,3]],[[1,2],[0,1]],true),tSolveX([[1,2],[3,5]],[[2,0],[1,1]],false),
+ tAtA([[1,2],[0,-1],[3,1]]),
+ tIdemChk([[H,H],[H,H]]),tIdemChk([[2,-1],[1,0]]),
+ tIdemChk([[fr(2,3),fr(-1,3),fr(-1,3)],[fr(-1,3),fr(2,3),fr(-1,3)],[fr(-1,3),fr(-1,3),fr(2,3)]]),
+ tIdemX(2,1),tIdemX(-1,-1),tIdemX(4,3),
+ tDet([[3,-2],[4,5]]),tDet([[2,-1,3],[0,4,1],[5,2,-2]]),tDet([[1,2,3],[4,5,6],[7,8,9]]),tDet([[3,0,2],[-1,4,1],[2,5,0]]),
+ tDet([[2,0,0,1],[0,3,0,0],[1,0,1,2],[0,0,4,1]]),tDet([[1,0,2,0],[0,0,3,1],[4,0,0,2],[1,5,1,1]]),
+ tDet([[2,1,0,0,0],[0,3,0,0,4],[0,0,1,0,0],[1,0,0,2,0],[0,0,5,0,1]]),
+ tDetProps([[8,3,2],[0,1,4],[3,3,2]],[[0,2,1],[1,7,0],[0,1,0]]),tDetProps([[1,2],[3,5]],[[2,0],[1,4]]),
+ tSingX(2,3,6),tSingX(4,-3,2),
+ tInv([[1,2],[3,4]]),tInv([[4,7],[2,6]]),tInv([[5,-3],[-2,2]]),
+ tInv([[1,2,0],[0,1,1],[1,0,2]]),tInv([[2,0,1],[1,1,0],[0,1,1]]),tInv([[2,0,0],[0,4,0],[0,0,-5]],'Inverse einer Diagonalmatrix'),
+ tRank([[1,2],[2,4]]),tRank([[1,2,3],[4,5,6],[7,8,9]]),tRank([[0,0,5],[5,-8,5],[8,-5,0]]),tRank([[1,3,2],[2,6,4]]),
+ tRank([[1,2,0,1],[2,4,1,3],[3,6,1,4]]),tRank([[1,0,2],[0,1,1],[1,1,3],[2,1,5]]),tRank([[1,0,0,2],[0,1,0,3],[0,0,1,1],[1,1,1,6]]),
+ tLGS([[2,3],[1,-1]],[8,-1],{cramer:true,title:'LGS mit der Cramerschen Regel (2×2)'}),
+ tLGS([[1,3,4],[2,9,14],[5,12,18]],[8,25,39],{title:'LGS (Beispiel aus der Vorlesung)'}),
+ tLGS([[1,1,-1],[1,2,3],[1,-4,2]],[11,17,4],{inv:true,vars:['x','y','z'],title:'LGS mit Matrixinversion'}),
+ tLGS([[2,1,-1],[1,-1,2],[3,2,1]],[1,5,10],{cramer:true,title:'LGS mit der Cramerschen Regel (3×3)'}),
+ tLGS([[1,2,1],[2,1,3],[1,1,2]],[80,130,90],{title:'Textaufgabe: Maschinenbelegung',prompt:'Ein Betrieb fertigt die Produkte P₁, P₂ und P₃ auf drei Maschinen. Eine Einheit von P₁, P₂, P₃ benötigt auf Maschine 1 genau 1, 2 und 1 Stunden, auf Maschine 2 genau 2, 1 und 3 Stunden und auf Maschine 3 genau 1, 1 und 2 Stunden. Die Maschinen sollen mit 80, 130 und 90 Stunden voll ausgelastet werden. Mit den Stückzahlen x₁, x₂, x₃ lautet das LGS:'}),
+ tLGS([[1,200],[1,350]],[70,107.5],{vars:['g','p'],title:'Textaufgabe: Stromtarif',prompt:'Ein Stromtarif besteht aus einer Grundgebühr g (in €) und einem Arbeitspreis p (in € je kWh). Haushalt 1 zahlt für 200 kWh 70 €, Haushalt 2 für 350 kWh 107,50 €. Das LGS lautet:',after:'Dezimalzahlen mit Punkt oder Komma eingeben.'}),
+ tSolv([[1,2],[2,4]],[3,7]),tSolv([[1,1,1],[1,2,3],[2,3,4]],[6,14,20]),tSolv([[1,1,1],[0,1,2],[1,0,1]],[6,8,4]),
+ tHom([[1,2,3],[2,4,6],[1,0,1]]),tHom([[2,1],[1,3]]),
+ tQF(-5,-2,-14),tQF(2,4,5),tQF(1,6,2),tQF(1,-2,1),tQF(-4,4,-1),tQF(0,-6,7),
+ tQF3([[2,-1,0],[-1,2,-1],[0,-1,2]]),tQF3([[-2,1,0],[1,-3,1],[0,1,-2]]),tQF3([[1,2,0],[2,1,1],[0,1,3]]),
+ tQFc(0,-6,7,1,-3),tQFc(2,0,-1,1,-1),tQFc(3,2,-2,2,1),tQFc(1,-2,3,1,2)
+];
+/* ===== Probetests ===== */
+const P=(t,pts)=>Object.assign({},t,{pts});
+const qsc=(topic,title,text,opts,expl)=>T(topic,title,text,[sc('',opts,0)],expl);
+const TESTS=[
+ {name:'Probetest 1',tasks:[
+  P(tMul([[2,-1,3],[0,4,1]],[[1,2],[-2,0],[3,1]]),3),
+  P(tVec([2,-1,2],[1,3,-2]),3),
+  P(tAngle([3,1],[1,2]),2),
+  P(tDetProps([[2,1,0],[1,3,1],[0,2,1]],[[1,0,2],[0,1,0],[3,0,1]]),5),
+  P(tInv([[3,1],[5,2]]),3),
+  P(tRank([[1,2,1],[2,4,2],[1,0,3]]),2),
+  P(tIdemSC([[[1,2],[2,1]],[[3,-6],[1,-2]],[[-1,0],[0,-1]],[[1,1],[1,1]]],1),2),
+  P(qsc('mat','Matrixalgebra (Single Choice)','Vereinfachen Sie (alle Matrizen quadratisch und regulär): (B′A′)′(CAB)⁻¹ = …',['C⁻¹','C','(AB)²C⁻¹','B⁻¹A⁻¹C⁻¹'],'(B′A′)′ = AB und (CAB)⁻¹ = (AB)⁻¹C⁻¹. Produkt: AB(AB)⁻¹C⁻¹ = C⁻¹.'),2),
+  P(tQF(3,-4,2),3),
+  P(tQF3([[-1,1,0],[1,-2,1],[0,1,-3]]),4)]},
+ {name:'Probetest 2',tasks:[
+  P(tMul([[1,2],[0,-1],[3,1]],[[2,0,1],[-1,3,2]]),3),
+  P(tVec([4,0,-3],[1,2,2]),3),
+  P(tAngle([-2,4],[3,4]),2),
+  P(tOrth([2,1,-2],[1,2],1),3),
+  P(tDet([[2,0,1,0],[1,3,0,0],[0,0,2,1],[0,4,0,1]]),3),
+  P(tInv([[1,0,2],[2,1,0],[0,1,1]]),5),
+  P(tRank([[1,-1,2,0],[2,-2,5,1],[3,-3,7,1]]),2),
+  P(tIdemX(3,2),2),
+  P(tQF(-2,6,-5),3),
+  P(tQFc(1,4,1,1,1),3)]},
+ {name:'Probetest 3',tasks:[
+  P(tMul([[1,0,2],[-1,3,1],[2,1,0]],[[2,1,0],[0,-1,3],[1,2,1]]),3),
+  P(tVec([1,-2,2],[3,1,0]),3),
+  P(tAngle([-7,2],[0,-3]),2),
+  P(tOrth([1,1,1],[1,-2],3),3),
+  P(tDetProps([[1,2,0],[3,1,1],[0,2,2]],[[2,0,1],[0,1,0],[1,0,1]]),5),
+  P(tInv([[4,2],[3,2]]),3),
+  P(tRank([[2,1,0],[1,1,1],[0,1,3]]),2),
+  P(tIdemSC([[[2,1],[1,2]],[[0,2],[2,0]],[[4,-12],[1,-3]],[[1,-1],[-1,1]]],2),2),
+  P(tSolveX([[2,1],[1,1]],[[3,1],[2,0]],true),3),
+  P(tLGS([[1,2,-1],[2,1,1],[1,-1,3]],[2,7,8],{}),4)]}
+];
+/* ===== Ansichten ===== */
+let timerId=null;
+function listView(main,pool,title,intro){
+ main.appendChild(el('div','card',`<h2>${title}</h2><div class="mut">${intro}</div>`));
+ const bar=el('div','bar'),sel=el('select');sel.appendChild(new Option('Alle Themen ('+pool.length+')',''));
+ Object.keys(TOP).forEach(k=>{const n=pool.filter(t=>t.topic===k).length;if(n)sel.appendChild(new Option(TOP[k]+' ('+n+')',k))});
+ bar.appendChild(el('span','','Thema:'));bar.appendChild(sel);main.appendChild(bar);
+ const list=el('div');main.appendChild(list);
+ const draw=()=>{list.innerHTML='';pool.filter(t=>!sel.value||t.topic===sel.value).forEach((t,i)=>list.appendChild(renderTask(t,'practice',i+1).box))};
+ sel.onchange=draw;draw()}
+function runTest(main,k){const test=TESTS[k],total=test.tasks.reduce((s,t)=>s+t.pts,0);main.innerHTML='';
+ const tb=el('div','timer',`<strong>${test.name}</strong><span class="mut">${test.tasks.length} Aufgaben · ${total} Punkte · keine Rückmeldung vor der Abgabe</span><span id="clock">30:00</span>`);
+ const fin=el('button','pri','Abgeben');tb.appendChild(fin);main.appendChild(tb);
+ const res=el('div');main.appendChild(res);
+ const rs=test.tasks.map((t,i)=>{const r=renderTask(t,'test',i+1);main.appendChild(r.box);return r});
+ const fin2=el('button','pri','Test abgeben und auswerten');main.appendChild(fin2);
+ let left=30*60;const clock=$('#clock');
+ function submit(timeout){clearInterval(timerId);timerId=null;let pts=0;
+  const rows=rs.map((r,i)=>{const s=r.grade(true)*test.tasks[i].pts;pts+=s;r.showSol();r.lock();return`<tr><td>${i+1}. ${test.tasks[i].title}</td><td>${nstr(Math.round(s*10)/10)} / ${test.tasks[i].pts}</td></tr>`});
+  const pct=Math.round(pts/total*1000)/10,b=bonus(pct),used=30*60-left;
+  res.appendChild(el('div','card',`<h2>Auswertung ${test.name}</h2>${timeout?'<p class="fb bad">Die Zeit ist abgelaufen – der Test wurde automatisch abgegeben.</p>':''}<div class="big">${nstr(Math.round(pts*10)/10)} von ${total} Punkten = ${nstr(pct)} %</div><p>Das entspräche <strong>${b} Bonuspunkt${b===1?'':'en'}</strong> für die Klausur (ab 50 % → 1, ab 70 % → 2, ab 85 % → 3). Benötigte Zeit: ${Math.floor(used/60)} min ${used%60} s.</p><table class="info"><tr><th>Aufgabe</th><th>Punkte</th></tr>${rows.join('')}</table><p class="mut">Unten stehen bei jeder Aufgabe die richtigen Antworten und der Lösungsweg.</p>`));
+  tb.remove();fin2.remove();const st=load();st.tests=st.tests||{};if(!(st.tests[k]>=pct))st.tests[k]=pct;save(st);window.scrollTo(0,0)}
+ timerId=setInterval(()=>{left--;clock.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');if(left<=300)clock.classList.add('warn');if(left<=0)submit(true)},1000);
+ fin.onclick=fin2.onclick=()=>{if(confirm('Test wirklich abgeben? Danach sind keine Änderungen mehr möglich.'))submit(false)}}
+const VIEWS={
+ home(main){main.appendChild(el('div','card',`<h2>Lernapp Lineare Algebra</h2><p>Zur Vorlesung <strong>Wirtschaftsmathematik, Kapitel 1 „Lineare Algebra“</strong> (Prof. Dimpfl, Universität Hohenheim). Alle Aufgaben verwenden die Schreibweise der Vorlesung (A′ für die Transponierte, rg(A) für den Rang).</p>`));
+  const g=el('div','grid');[['mc','Multiple Choice',MCQ.length+' Verständnisfragen mit Erklärung'],['calc','Rechenaufgaben',CALC.length+' Aufgaben mit Zahlen- und Matrixeingabe'],['tests','Probetests','3 Tests · je 30 Minuten · wie der Zwischentest'],['formeln','Formeln','Das Wichtigste aus Kapitel 1 auf einen Blick']].forEach(([v,t,d])=>{const b=el('button','tile',`<small>${t}</small><span>${d}</span>`);b.onclick=()=>show(v);g.appendChild(b)});main.appendChild(g);
+  main.appendChild(el('div','card',`<h2>So sieht der echte Test aus</h2><ul><li><strong>Erster Zwischentest am 20. November 2026</strong>, 30 Minuten, digital auf ILIAS-ok in Präsenz (eigener Laptop mit Safe Exam Browser – vorher installieren und testen!).</li><li>Freiwillig und unbenotet, bringt aber bis zu 3 Bonuspunkte für die Klausur: unter 50 % → 0, ab 50 % → 1, ab 70 % → 2, ab 85 % → 3 Punkte.</li><li>In den Vorjahren rund 9–10 Aufgaben, fast alle mit <strong>Zahlen- oder Matrixeingabe</strong>, nur wenige Single/Multiple Choice. Die Aufgaben stammen aus den wöchentlichen Online-Aufgaben, nur mit anderen Zahlen.</li><li>Typische Themen im 1. Test: Matrixmultiplikation, Vektorprodukt und Länge, Winkel zwischen Vektoren, Orthogonalität, Determinante (inkl. Rechenregeln), Inverse, Rang, Idempotenz, Matrixgleichung nach X auflösen, quadratische Formen.</li><li>Brüche werden als z. B. <code>3/7</code> eingegeben, Winkel auf ganze Grad gerundet.</li><li>Erlaubt sind nur die zugelassenen wissenschaftlichen Taschenrechner (z. B. Casio fx-810DE CW, TI-30X Prio MathPrint, Sharp EL-W550TG).</li></ul><p class="mut">Die beste Vorbereitung bleiben die Online-Aufgaben (Format A und B) auf ILIAS-ok – diese App ergänzt sie, ersetzt sie aber nicht.</p>`));
+  main.appendChild(el('div','card',`<h2>Eingabe-Hinweise</h2><ul><li>Ganze Zahlen, Dezimalzahlen (Punkt oder Komma) und Brüche wie <code>-3/2</code> werden akzeptiert.</li><li>Gerundete Ergebnisse auf 2 Dezimalstellen angeben.</li><li>„Prüfen“ zeigt, was stimmt; „Lösung zeigen“ blendet Ergebnis und Lösungsweg ein.</li></ul>`))},
+ mc(main){listView(main,MCQ,'Multiple Choice','Verständnisfragen zu allen Abschnitten von Kapitel 1. Bei „Multiple Choice“ können mehrere Antworten richtig sein, bei „Single Choice“ genau eine. Die Reihenfolge der Antworten wird jedes Mal gemischt.')},
+ calc(main){listView(main,CALC,'Rechenaufgaben','Aufgaben im Stil der ILIAS-Online-Aufgaben: Ergebnis eintippen, prüfen, bei Bedarf Lösungsweg ansehen. Erst selbst auf Papier rechnen!')},
+ tests(main){const st=load().tests||{};main.appendChild(el('div','card',`<h2>Probetests</h2><p>Jeder Probetest dauert <strong>30 Minuten</strong> und ist wie der Zwischentest aufgebaut. Während des Tests gibt es keine Rückmeldung; ausgewertet wird erst nach der Abgabe (oder automatisch, wenn die Zeit abgelaufen ist). Taschenrechner, Stift und Papier bereitlegen.</p>`));
+  const g=el('div','grid');TESTS.forEach((t,k)=>{const b=el('button','tile',`<small>${t.name}</small><span>${t.tasks.length} Aufgaben · ${t.tasks.reduce((s,x)=>s+x.pts,0)} Punkte</span><span class="mut">${st[k]!==undefined?'Bestes Ergebnis: '+nstr(st[k])+' %':'noch nicht bearbeitet'}</span>`);b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v==='tests'));runTest(main,k);window.scrollTo(0,0)};g.appendChild(b)});main.appendChild(g)},
+ formeln(main){main.appendChild(el('div','card fs',FORMELN))}
+};
+function show(v){if(timerId){clearInterval(timerId);timerId=null}
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ const main=$('#view');main.innerHTML='';VIEWS[v](main);window.scrollTo(0,0)}
+const FORMELN=`<h2>Formeln zu Kapitel 1</h2>
+<h3>Vektoren</h3><ul><li>Inneres Produkt: v′w = Σvᵢwᵢ (Skalar); äußeres Produkt: vw′ (Matrix)</li><li>Länge: ‖v‖ = √(v′v); normierter Vektor: ṽ = v/‖v‖</li><li>Winkel: cos γ = v′w / (‖v‖·‖w‖); orthogonal ⇔ v′w = 0; orthonormal = orthogonal und Länge 1</li><li>Konvexkombination: Gewichte ≥ 0 mit Summe 1</li><li>Linear unabhängig: Σλᵢvᵢ = 0 nur für alle λᵢ = 0; Basis des ℝⁿ: n linear unabhängige Vektoren</li><li>Summen: ι′x = Σxᵢ, x′x = Σxᵢ², x′y = Σxᵢyᵢ</li></ul>
+<h3>Matrizenrechnung</h3><ul><li>Konformität: (n×m)(m×p) → (n×p); Element (i, j) = Zeile i mal Spalte j</li><li>(AB)C = A(BC), A(B + C) = AB + AC, aber im Allgemeinen AB ≠ BA</li><li>(A′)′ = A, (A + B)′ = A′ + B′, (AB)′ = B′A′</li><li>(A + B)² = A² + AB + BA + B²; A⁰ = I; keine Division durch Matrizen</li></ul>
+<h3>Besondere Matrizen</h3><ul><li>Symmetrisch: A′ = A; B′B und BB′ sind immer symmetrisch</li><li>Idempotent: AA = A (z. B. I, P = X(X′X)⁻¹X′)</li><li>Diagonal-, Dreiecks-, Einheits- und Nullmatrix</li></ul>
+<h3>Determinante</h3><ul><li>2×2: |A| = a₁₁a₂₂ − a₁₂a₂₁; 3×3: Sarrus (nur 3×3!); sonst Laplace: |A| = Σⱼ aᵢⱼ(−1)<sup>i+j</sup>|Aᵢⱼ|</li><li>Zeilentausch → Vorzeichenwechsel; Vielfaches einer Zeile addieren → keine Änderung</li><li>det(A′) = det(A), det(kA) = kⁿdet(A), det(AB) = det(A)·det(B), det(A⁻¹) = 1/det(A), det(I) = 1</li><li>det(A + B) ≠ det(A) + det(B) im Allgemeinen</li><li>det(A) = 0 ⇔ Spalten linear abhängig ⇔ A singulär ⇔ rg(A) &lt; n</li></ul>
+<h3>Inverse</h3><ul><li>AA⁻¹ = A⁻¹A = I; nur für quadratische, reguläre Matrizen; eindeutig</li><li>2×2: A⁻¹ = 1/|A| · ${M([['a₂₂','−a₁₂'],['−a₂₁','a₁₁']])}</li><li>Allgemein: bᵢⱼ = (1/|A|)(−1)<sup>i+j</sup>|Aⱼᵢ| oder Gauß: (A | I) → (I | A⁻¹)</li><li>(A⁻¹)⁻¹ = A, (AB)⁻¹ = B⁻¹A⁻¹, (A′)⁻¹ = (A⁻¹)′</li><li>AX = B → X = A⁻¹B; XA = B → X = BA⁻¹</li></ul>
+<h3>Rang</h3><ul><li>Maximale Anzahl linear unabhängiger Spalten = Zeilen; rg(A) ≤ min(m, n)</li><li>rg(A) = rg(A′) = rg(A′A); n×n-Matrix regulär ⇔ rg(A) = n</li><li>Bestimmung: Gauß → Anzahl der Zeilen ungleich null in der Stufenform</li></ul>
+<h3>Lineare Gleichungssysteme Ax = b (m Unbekannte)</h3><ul><li>rg(A) &lt; rg(A | b): keine Lösung</li><li>rg(A) = rg(A | b) = m: genau eine Lösung</li><li>rg(A) = rg(A | b) = r &lt; m: unendlich viele Lösungen, m − r freie Variablen</li><li>Lösung: x = A⁻¹b, Cramer xⱼ = |A(j)|/|A|, oder Gauß-Elimination</li><li>Homogen (b = 0): immer triviale Lösung; nichttriviale nur bei rg(A) &lt; m</li></ul>
+<h3>Quadratische Formen</h3><ul><li>Q = ax² + 2bxy + cy² = x′Ax mit A = ${M([['a','b'],['b','c']])}</li><li>a &gt; 0 und ac − b² &gt; 0: positiv definit; a &lt; 0 und ac − b² &gt; 0: negativ definit; ac − b² &lt; 0: indefinit</li><li>Allgemein über führende Hauptminoren: alle &gt; 0 → positiv definit; −, +, −, … → negativ definit</li><li>Unter Nebenbedingung αx + βy = 0: geränderte Matrix ${M([[0,'α','β'],['α','a','b'],['β','b','c']])}; Determinante &lt; 0 → positiv definit, &gt; 0 → negativ definit (unter der NB)</li></ul>`;
+if(typeof document!=='undefined'){
+ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{if(timerId&&!confirm('Der laufende Probetest wird abgebrochen. Fortfahren?'))return;show(b.dataset.v)});
+ show('home')}
+</script>
+</body>
+</html>
